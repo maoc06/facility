@@ -11,6 +11,7 @@ import {
 import { GithubMirrorService } from "./github/mirror.js";
 import { GithubWorkspaceCredentialBroker } from "./github/workspace-credentials.js";
 import { CostBudgetService } from "./insights/costs.js";
+import { StorySessionService } from "./sessions/service.js";
 import { ProjectBacklogService } from "./stories/backlog.js";
 import { StoryCompletionService } from "./stories/completion.js";
 import { GithubConsultationSources } from "./stories/consultation-sources.js";
@@ -42,6 +43,7 @@ import { VercelWorkspaceRuntime } from "./workspaces/vercel.js";
 
 export type StoryDomain = {
   inputFiles: StoryInputFileService;
+  sessions: StorySessionService;
   runtime: WorkspaceRuntime;
   stories: StoryWorkspaceService;
   catalog: AgentCatalogService;
@@ -98,7 +100,7 @@ export function createStoryDomain(input: {
     runtime,
     undefined,
     undefined,
-    (scope) => variables.values(scope),
+    (scope, db) => variables.values(scope, db),
   );
   const previewConvergence = new StoryPreviewConvergenceService(
     input.db,
@@ -209,7 +211,7 @@ export function createStoryDomain(input: {
     mirror,
     githubFactory === unavailableGithubFactory ? undefined : githubFactory,
   );
-  return {
+  const domain = {
     inputFiles: new StoryInputFileService(
       input.db,
       runtime,
@@ -239,6 +241,10 @@ export function createStoryDomain(input: {
     completion,
     backlog,
   };
+  const sessions = new StorySessionService(input.db, domain, input.config.secretMasterKey);
+  stories.takeoverSession = (db, scope, userId, turnId) =>
+    sessions.takeoverForMessage(db, scope, userId, turnId);
+  return { ...domain, sessions };
 }
 
 function workspaceRuntime(config: AppConfig, db: FacilityDb): WorkspaceRuntime {

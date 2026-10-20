@@ -40,8 +40,9 @@ export class GithubWorkspaceCredentialBroker {
     orgId: string,
     projectId: string,
     options: { readOnly?: boolean } = {},
+    db = this.db,
   ): Promise<GithubWorkspaceCredentials> {
-    const repositories = await this.db
+    const repositories = await db
       .select()
       .from(projectRepositories)
       .where(
@@ -70,7 +71,7 @@ export class GithubWorkspaceCredentialBroker {
         "every project repository must have a GitHub installation",
       );
     }
-    const installations = await this.db
+    const installations = await db
       .select()
       .from(githubInstallations)
       .where(
@@ -149,7 +150,7 @@ export class GithubWorkspaceCredentialBroker {
           owner: repository.owner,
           name: repository.name,
           defaultBranch: repository.defaultBranch,
-          developmentBranch: await repositoryDevelopmentBranch(this.db, repository),
+          developmentBranch: await repositoryDevelopmentBranch(db, repository),
           role: repository.role as "primary" | "related",
         })),
       ),

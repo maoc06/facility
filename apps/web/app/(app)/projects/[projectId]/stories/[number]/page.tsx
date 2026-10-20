@@ -300,6 +300,8 @@ export default async function StoryPage({
               waitingAgent={waitingAgent}
               artifacts={bundle.artifacts}
               title="Conversation"
+              session={bundle.session}
+              canControlSession={can(permissions, "sessions:control")}
             />
             {canExecute && !agents.ok ? (
               <ErrorNotice message={`Couldn't load .agents — ${agents.message}`} />
